@@ -251,6 +251,7 @@ bool dual_infeasibility_criteria_met(const pdhg_solver_state_t *state,
 void check_termination_criteria(pdhg_solver_state_t *solver_state,
                                 const termination_criteria_t *criteria)
 {
+    NVTX_RANGE("termination");
     if (optimality_criteria_met(solver_state, criteria->eps_optimal_relative,
                                 criteria->eps_feasible_relative))
     {
@@ -284,6 +285,7 @@ bool should_do_adaptive_restart(pdhg_solver_state_t *solver_state,
                                 const restart_parameters_t *restart_params,
                                 int termination_evaluation_frequency)
 {
+    NVTX_RANGE("restart");
     bool do_restart = false;
     if (solver_state->total_count == termination_evaluation_frequency)
     {
@@ -658,6 +660,7 @@ static double get_vector_sum(cublasHandle_t handle, int n, double *ones_d,
 
 void compute_residual(pdhg_solver_state_t *state)
 {
+    NVTX_RANGE("residual");
     cusparseDnVecSetValues(state->vec_primal_sol, state->pdhg_primal_solution);
     cusparseDnVecSetValues(state->vec_dual_sol, state->pdhg_dual_solution);
     cusparseDnVecSetValues(state->vec_primal_prod, state->primal_product);
@@ -725,6 +728,7 @@ void compute_residual(pdhg_solver_state_t *state)
 
 void compute_infeasibility_information(pdhg_solver_state_t *state)
 {
+    NVTX_RANGE("infeasibility");
     primal_infeasibility_project_kernel<<<state->num_blocks_primal,
                                           THREADS_PER_BLOCK>>>(
         state->delta_primal_solution, state->variable_lower_bound,
@@ -833,7 +837,7 @@ void fill_or_copy(double **dst, int n, const double *src, double fill_val)
             (*dst)[i] = fill_val;
 }
 
-// convert dense â†’ CSR
+// convert dense â†? CSR
 int dense_to_csr(const matrix_desc_t *desc, int **row_ptr, int **col_ind,
                  double **vals, int *nnz_out)
 {
@@ -874,7 +878,7 @@ int dense_to_csr(const matrix_desc_t *desc, int **row_ptr, int **col_ind,
     return 0;
 }
 
-// convert CSC â†’ CSR
+// convert CSC â†? CSR
 int csc_to_csr(const matrix_desc_t *desc, int **row_ptr, int **col_ind,
                double **vals, int *nnz_out)
 {
@@ -943,7 +947,7 @@ int csc_to_csr(const matrix_desc_t *desc, int **row_ptr, int **col_ind,
     return 0;
 }
 
-// convert COO â†’ CSR
+// convert COO â†? CSR
 int coo_to_csr(const matrix_desc_t *desc, int **row_ptr, int **col_ind,
                double **vals, int *nnz_out)
 {

@@ -146,3 +146,23 @@ extern "C"
 }
 
 #endif
+
+#ifdef __cplusplus
+#include <nvtx3/nvtx3.hpp>
+struct NvtxRange
+{
+    explicit NvtxRange(const char *name)
+    {
+        nvtxRangePushA(name);
+    }
+    ~NvtxRange()
+    {
+        nvtxRangePop();
+    }
+};
+#define NVTX_CONCAT_IMPL(a, b) a##b
+#define NVTX_CONCAT(a, b) NVTX_CONCAT_IMPL(a, b)
+#define NVTX_RANGE(name) NvtxRange NVTX_CONCAT(_nvtx_, __COUNTER__)(name)
+#else
+#define NVTX_RANGE(name) ((void)0)
+#endif
