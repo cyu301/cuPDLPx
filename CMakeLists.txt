@@ -164,6 +164,21 @@ if(CUPDLPX_BUILD_CLI)
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
         CUDA_RESOLVE_DEVICE_SYMBOLS ON
     )
+
+    add_executable(cupdlpx_batch test/BatchTest.cpp)
+
+    target_include_directories(cupdlpx_batch PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/internal
+    )
+
+    target_link_libraries(cupdlpx_batch PRIVATE cupdlpx_core)
+
+    set_target_properties(cupdlpx_batch PROPERTIES
+        OUTPUT_NAME "cupdlpx_batch"
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+        CUDA_RESOLVE_DEVICE_SYMBOLS ON
+    )
 endif()
 
 # -----------------------------------------------------------------------------

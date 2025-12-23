@@ -57,6 +57,9 @@ dkms.conf
 # ignored files
 build/*
 test/*
+!test/BatchTest.cpp
 /.vscode
 /.venv
 /_b
+output/
+profiling/
