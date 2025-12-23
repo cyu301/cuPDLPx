@@ -63,3 +63,4 @@ test/*
 /_b
 output/
 profiling/
+slurm/

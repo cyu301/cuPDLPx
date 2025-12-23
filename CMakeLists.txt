@@ -69,6 +69,45 @@ cmake_dependent_option(CUPDLPX_BUILD_TESTS "Build the cuPDLPx test suite" OFF
 find_package(CUDAToolkit REQUIRED)
 find_package(ZLIB REQUIRED)
 
+if (ZLIB_FOUND)
+    message(STATUS "ZLIB found by CMake: ${ZLIB_INCLUDE_DIRS}")
+    include_directories(${ZLIB_INCLUDE_DIRS})
+
+else()
+    message(WARNING "CMake could not find system ZLIB. Attempting module-based detection...")
+
+    # Try to locate ZLIB by checking LD_LIBRARY_PATH
+    find_path(ZLIB_INCLUDE_DIR
+        NAMES zlib.h
+        HINTS ENV LD_LIBRARY_PATH
+        PATH_SUFFIXES ../include include
+    )
+
+    find_library(ZLIB_LIBRARY NAMES z zlib HINTS ENV LD_LIBRARY_PATH)
+
+    if (ZLIB_INCLUDE_DIR AND ZLIB_LIBRARY)
+        message(STATUS "ZLIB found via module paths:")
+        message(STATUS "  Includes: ${ZLIB_INCLUDE_DIR}")
+        message(STATUS "  Library : ${ZLIB_LIBRARY}")
+
+        set(ZLIB_FOUND TRUE)
+        set(ZLIB_INCLUDE_DIRS ${ZLIB_INCLUDE_DIR})
+        include_directories(${ZLIB_INCLUDE_DIR})
+        list(APPEND EXTRA_LIBS ${ZLIB_LIBRARY})
+    
+    else()
+        message(FATAL_ERROR "ZLIB not found!\n")
+    endif()
+endif()
+
+if (ZLIB_FOUND AND NOT TARGET ZLIB::ZLIB)
+    add_library(ZLIB::ZLIB UNKNOWN IMPORTED)
+    set_target_properties(ZLIB::ZLIB PROPERTIES
+        IMPORTED_LOCATION "${ZLIB_LIBRARY}"
+        INTERFACE_INCLUDE_DIRECTORIES "${ZLIB_INCLUDE_DIR}"
+    )
+endif()
+
 if (CUPDLPX_BUILD_PYTHON)
     # Dependencies required only for Python bindings
     find_package(pybind11 CONFIG REQUIRED)

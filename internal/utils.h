@@ -148,7 +148,7 @@ extern "C"
 #endif
 
 #ifdef __cplusplus
-#include <nvtx3/nvtx3.hpp>
+#include <nvtx3/nvToolsExt.h>
 struct NvtxRange
 {
     explicit NvtxRange(const char *name)
