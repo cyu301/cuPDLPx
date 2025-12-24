@@ -99,6 +99,7 @@ cupdlpx_result_t *optimize(const pdhg_parameters_t *params,
     rescale_info_t *rescale_info = rescale_problem(params, original_problem);
     pdhg_solver_state_t *state =
         initialize_solver_state(original_problem, rescale_info);
+    state->debug = params->debug;
 
     rescale_info_free(rescale_info);
     initialize_step_size_and_primal_weight(state, params);
@@ -705,6 +706,13 @@ static void perform_restart(pdhg_solver_state_t *state,
                             const pdhg_parameters_t *params)
 {
     NVTX_RANGE("restart");
+    double prev_primal_weight = state->primal_weight;
+    double prev_primal_weight_last_error = state->primal_weight_last_error;
+    double prev_primal_weight_error_sum = state->primal_weight_error_sum;
+    double prev_fixed_point_error = state->fixed_point_error;
+    double error = 0.0;
+    double delta_error = 0.0;
+    bool weight_updated = false;
     compute_delta_solution_kernel<<<state->num_blocks_primal_dual,
                                     THREADS_PER_BLOCK>>>(
         state->initial_primal_solution, state->pdhg_primal_solution,
@@ -725,16 +733,16 @@ static void perform_restart(pdhg_solver_state_t *state,
     if (primal_dist > 1e-16 && dual_dist > 1e-16 && primal_dist < 1e12 &&
         dual_dist < 1e12 && ratio_infeas > 1e-8 && ratio_infeas < 1e8)
     {
-        double error =
-            log(dual_dist) - log(primal_dist) - log(state->primal_weight);
+        error = log(dual_dist) - log(primal_dist) - log(state->primal_weight);
         state->primal_weight_error_sum *= params->restart_params.i_smooth;
         state->primal_weight_error_sum += error;
-        double delta_error = error - state->primal_weight_last_error;
+        delta_error = error - state->primal_weight_last_error;
         state->primal_weight *=
             exp(params->restart_params.k_p * error +
                 params->restart_params.k_i * state->primal_weight_error_sum +
                 params->restart_params.k_d * delta_error);
         state->primal_weight_last_error = error;
+        weight_updated = true;
     }
     else
     {
@@ -749,6 +757,21 @@ static void perform_restart(pdhg_solver_state_t *state,
     {
         state->best_primal_dual_residual_gap = primal_dual_residual_gap;
         state->best_primal_weight = state->primal_weight;
+    }
+
+    if (state->debug)
+    {
+        printf("[DEBUG] Restart at iteration %d: primalDist = %.16e, dualDist = %.16e, "
+               "infeasRatio = %.16e, primalWeight = %.16e, primalWeightLastError = %.16e, "
+               "primalWeightErrorSum = %.16e, fixedPointError = %.16e \n",
+               state->total_count, primal_dist, dual_dist, ratio_infeas,
+               prev_primal_weight, prev_primal_weight_last_error,
+               prev_primal_weight_error_sum, prev_fixed_point_error);
+        if (weight_updated)
+        {
+            printf("[DEBUG] Updated primal weight = %.16e \n",
+                   state->primal_weight);
+        }
     }
 
     CUDA_CHECK(cudaMemcpy(
@@ -836,6 +859,15 @@ static void compute_fixed_point_error(pdhg_solver_state_t *state)
     interaction = 2 * state->step_size * cross_term;
 
     state->fixed_point_error = sqrt(movement + interaction);
+
+    if (state->debug)
+    {
+        printf("[DEBUG] Fixed point error at iteration %d: %.16e \n",
+               state->total_count, state->fixed_point_error);
+        printf("[DEBUG]   Primal norm: %.16e, Dual norm: %.16e, Movement: %.16e, "
+               "Interaction: %.16e, Cross term: %.16e \n",
+               primal_norm, dual_norm, movement, interaction, cross_term);
+    }
 }
 
 void pdhg_solver_state_free(pdhg_solver_state_t *state)

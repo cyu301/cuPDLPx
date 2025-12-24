@@ -213,6 +213,7 @@ static py::dict get_default_params_py()
 
     // verbosity
     d["verbose"] = p.verbose;
+    d["debug"] = p.debug;
     d["termination_evaluation_frequency"] = p.termination_evaluation_frequency;
 
     // tolerances
@@ -266,6 +267,7 @@ static void parse_params_from_python(py::object params_obj, pdhg_parameters_t *p
 
     // verbosity
     getb("verbose", p->verbose);
+    getb("debug", p->debug);
     geti("termination_evaluation_frequency", p->termination_evaluation_frequency);
 
     // tolerances

@@ -84,6 +84,7 @@ extern "C"
 		double pock_chambolle_alpha;
 		bool bound_objective_rescaling;
 		bool verbose;
+		bool debug;
 		int termination_evaluation_frequency;
 		int sv_max_iter;
 		double sv_tol;

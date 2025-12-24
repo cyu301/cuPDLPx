@@ -327,6 +327,7 @@ void set_default_parameters(pdhg_parameters_t *params)
     params->pock_chambolle_alpha = 1.0;
     params->bound_objective_rescaling = true;
     params->verbose = false;
+    params->debug = false;
     params->termination_evaluation_frequency = 200;
     params->feasibility_polishing = false;
     params->reflection_coefficient = 1.0;
@@ -420,6 +421,9 @@ void print_initial_info(const pdhg_parameters_t *params,
     PRINT_DIFF_BOOL("bound_obj_rescaling",
                     params->bound_objective_rescaling, 
                     default_params.bound_objective_rescaling);
+    PRINT_DIFF_BOOL("debug",
+                    params->debug,
+                    default_params.debug);
     PRINT_DIFF_INT("sv_max_iter",
                    params->sv_max_iter, 
                    default_params.sv_max_iter);
@@ -477,7 +481,7 @@ void display_iteration_stats(const pdhg_solver_state_t *state, bool verbose)
     }
     if (state->total_count % get_print_frequency(state->total_count) == 0)
     {
-        printf("%6d %.1e | %8.1e  %8.1e | %.1e %.1e %.1e | %.1e %.1e %.1e \n",
+        printf("%6d  %10.4e  | %12.6e  %12.6e  |   %10.4e    %10.4e    %10.4e  |   %10.4e    %10.4e    %10.4e \n",
                state->total_count, state->cumulative_time_sec,
                state->primal_objective_value, state->dual_objective_value,
                state->absolute_primal_residual, state->absolute_dual_residual,

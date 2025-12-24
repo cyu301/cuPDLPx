@@ -312,6 +312,7 @@ void print_usage(const char *prog_name)
     std::cerr << "Options:\n";
     std::cerr << "  -h, --help                          Display this help message.\n";
     std::cerr << "  -v, --verbose                       Enable verbose logging (default: false).\n";
+    std::cerr << "  -d, --debug                         Enable debug logging (default: false).\n";
     std::cerr << "      --time_limit <seconds>          Time limit in seconds (default: 3600.0).\n";
     std::cerr << "      --iter_limit <iterations>       Iteration limit (default: 2147483647).\n";
     std::cerr << "      --eps_opt <tolerance>           Relative optimality tolerance (default: 1e-4).\n";
@@ -340,6 +341,7 @@ int main(int argc, char *argv[])
     static struct option long_options[] = {
         {"help", no_argument, 0, 'h'},
         {"verbose", no_argument, 0, 'v'},
+        {"debug", no_argument, 0, 'd'},
         {"time_limit", required_argument, 0, 1001},
         {"iter_limit", required_argument, 0, 1002},
         {"eps_opt", required_argument, 0, 1003},
@@ -357,7 +359,7 @@ int main(int argc, char *argv[])
         {0, 0, 0, 0}};
 
     int opt;
-    while ((opt = getopt_long(argc, argv, "hvf", long_options, nullptr)) != -1)
+    while ((opt = getopt_long(argc, argv, "hvfd", long_options, nullptr)) != -1)
     {
         switch (opt)
         {
@@ -366,6 +368,9 @@ int main(int argc, char *argv[])
             return 0;
         case 'v':
             params.verbose = true;
+            break;
+        case 'd':
+            params.debug = true;
             break;
         case 1001: // --time_limit
             params.termination_criteria.time_sec_limit = atof(optarg);

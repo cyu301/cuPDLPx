@@ -141,6 +141,8 @@ void print_usage(const char *prog_name)
             "  -h, --help                          Display this help message.\n");
     fprintf(stderr, "  -v, --verbose                       "
                     "Enable verbose logging (default: false).\n");
+    fprintf(stderr, "  -d, --debug                         "
+                    "Enable debug logging (default: false).\n");
     fprintf(stderr, "      --time_limit <seconds>          "
                     "Time limit in seconds (default: 3600.0).\n");
     fprintf(
@@ -181,6 +183,7 @@ int main(int argc, char *argv[])
     static struct option long_options[] = {
         {"help", no_argument, 0, 'h'},
         {"verbose", no_argument, 0, 'v'},
+        {"debug", no_argument, 0, 'd'},
         {"time_limit", required_argument, 0, 1001},
         {"iter_limit", required_argument, 0, 1002},
         {"eps_opt", required_argument, 0, 1003},
@@ -198,7 +201,7 @@ int main(int argc, char *argv[])
         {0, 0, 0, 0}};
 
     int opt;
-    while ((opt = getopt_long(argc, argv, "hvf", long_options, NULL)) != -1)
+    while ((opt = getopt_long(argc, argv, "hvfd", long_options, NULL)) != -1)
     {
         switch (opt)
         {
@@ -207,6 +210,9 @@ int main(int argc, char *argv[])
             return 0;
         case 'v':
             params.verbose = true;
+            break;
+        case 'd':
+            params.debug = true;
             break;
         case 1001: // --time_limit
             params.termination_criteria.time_sec_limit = atof(optarg);

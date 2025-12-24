@@ -67,6 +67,7 @@ typedef struct
 	double primal_weight;
 	int total_count;
 	bool is_this_major_iteration;
+	bool debug;
 	double primal_weight_error_sum;
 	double primal_weight_last_error;
 	double best_primal_weight;
