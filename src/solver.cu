@@ -27,6 +27,18 @@ limitations under the License.
 #include <stdio.h>
 #include <time.h>
 
+static double monotonic_time_sec()
+{
+#if defined(CLOCK_MONOTONIC)
+    struct timespec ts;
+    if (clock_gettime(CLOCK_MONOTONIC, &ts) == 0)
+    {
+        return (double)ts.tv_sec + (double)ts.tv_nsec * 1e-9;
+    }
+#endif
+    return (double)clock() / CLOCKS_PER_SEC;
+}
+
 __global__ void compute_next_pdhg_primal_solution_kernel(
     const double *current_primal, double *reflected_primal,
     const double *dual_product, const double *objective, const double *var_lb,
@@ -103,7 +115,7 @@ cupdlpx_result_t *optimize(const pdhg_parameters_t *params,
 
     rescale_info_free(rescale_info);
     initialize_step_size_and_primal_weight(state, params);
-    clock_t start_time = clock();
+    double start_time = monotonic_time_sec();
     bool do_restart = false;
     {
         NVTX_RANGE("mainloop");
@@ -119,8 +131,7 @@ cupdlpx_result_t *optimize(const pdhg_parameters_t *params,
                     compute_infeasibility_information(state);
                 }
 
-                state->cumulative_time_sec =
-                    (double)(clock() - start_time) / CLOCKS_PER_SEC;
+                state->cumulative_time_sec = monotonic_time_sec() - start_time;
 
                 check_termination_criteria(state, &params->termination_criteria);
                 display_iteration_stats(state, params->verbose);
@@ -1009,7 +1020,7 @@ static cupdlpx_result_t *create_result_from_state(pdhg_solver_state_t *state)
 // Feasibility Polishing
 void feasibility_polish(const pdhg_parameters_t *params, pdhg_solver_state_t *state)
 {
-    clock_t start_time = clock();
+    double start_time = monotonic_time_sec();
     if (state->relative_primal_residual < params->termination_criteria.eps_feas_polish_relative &&
         state->relative_dual_residual < params->termination_criteria.eps_feas_polish_relative)
     {
@@ -1069,14 +1080,14 @@ void feasibility_polish(const pdhg_parameters_t *params, pdhg_solver_state_t *st
     primal_feas_polish_state_free(primal_state);
     dual_feas_polish_state_free(dual_state);
 
-    state->feasibility_polishing_time = (double)(clock() - start_time) / CLOCKS_PER_SEC;
+    state->feasibility_polishing_time = monotonic_time_sec() - start_time;
     return;
 }
 
 void primal_feasibility_polish(const pdhg_parameters_t *params, pdhg_solver_state_t *state, const pdhg_solver_state_t *ori_state)
 {
     print_initial_feas_polish_info(true, params);
-    clock_t start_time = clock();
+    double start_time = monotonic_time_sec();
     bool do_restart = false;
     while (state->termination_reason == TERMINATION_REASON_UNSPECIFIED)
     {
@@ -1084,7 +1095,7 @@ void primal_feasibility_polish(const pdhg_parameters_t *params, pdhg_solver_stat
         {
             compute_primal_feas_polish_residual(state, ori_state);
 
-            state->cumulative_time_sec = (double)(clock() - start_time) / CLOCKS_PER_SEC;
+            state->cumulative_time_sec = monotonic_time_sec() - start_time;
 
             check_feas_polishing_termination_criteria(state, &params->termination_criteria, true);
             display_feas_polish_iteration_stats(state, params->verbose, true);
@@ -1122,7 +1133,7 @@ void primal_feasibility_polish(const pdhg_parameters_t *params, pdhg_solver_stat
 void dual_feasibility_polish(const pdhg_parameters_t *params, pdhg_solver_state_t *state, const pdhg_solver_state_t *ori_state)
 {
     print_initial_feas_polish_info(false, params);
-    clock_t start_time = clock();
+    double start_time = monotonic_time_sec();
     bool do_restart = false;
     while (state->termination_reason == TERMINATION_REASON_UNSPECIFIED)
     {
@@ -1130,7 +1141,7 @@ void dual_feasibility_polish(const pdhg_parameters_t *params, pdhg_solver_state_
         {
             compute_dual_feas_polish_residual(state, ori_state);
 
-            state->cumulative_time_sec = (double)(clock() - start_time) / CLOCKS_PER_SEC;
+            state->cumulative_time_sec = monotonic_time_sec() - start_time;
 
             check_feas_polishing_termination_criteria(state, &params->termination_criteria, false);
             display_feas_polish_iteration_stats(state, params->verbose, false);
